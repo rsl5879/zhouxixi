@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>千年秦腔 - 文化遗产数字化展示平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-dark: #5a3e36;
+            --primary-medium: #8b4513;
+            --primary-light: #d4a017;
+            --background-light: #f5e8d1;
+            --background-medium: #e6d4b5;
+            --text-dark: #5a3e36;
+            --text-medium: #7a5d55;
+            --text-light: #f5e8d1;
+        }
+        
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background:linear-gradient(135deg, var(--background-light) 0%, var(--background-medium) 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .page {
+            display: none;
+            min-height: calc(100vh - 180px);
+            padding: 20px 0 80px;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: rgba(139, 69, 19, 0.95);
+            padding: 15px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.4s ease;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-text {
+            color: var(--text-light);
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        
+        .logo-text span {
+            color: var(--primary-light);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin: 0 10px;
+        }
+        
+        nav ul li a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        nav ul li a:hover {
+            color: var(--primary-light);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        nav ul li a.active {
+            color: var(--primary-light);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        nav ul li a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            background: var(--primary-light);
+            bottom: 0;
+            left: 0;
+            transition: width 0.3s;
+        }
+        
+        nav ul li a:hover:after, nav ul li a.active:after {
+            width: 100%;
+        }
+        
+        .search-container {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 5px 15px;
+            margin-left: 20px;
+        }
+        
+        .search-container input {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 16px;
+            padding: 8px 12px;
+            width: 180px;
+            outline: none;
+        }
+        
+        .search-container input::placeholder {
+            color: rgba(245, 232, 209, 0.7);
+        }
+        
+        .search-container button {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-container button:hover {
+            color: var(--primary-light);
+            transform: scale(1.1);
+        }
+        
+        .hero {
+            height: 85vh;
+            background: linear-gradient(rgba(90, 62, 54, 0.7), rgba(90, 62, 54, 0.7)), 
+                        url('https://images.unsplash.com/photo-1588416473588-9ea815a3e6d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 60px;
+        }
+        
+        .hero-content {
+            text-align: center;
+            color: var(--text-light);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+            z-index: 10;
+        }
+        
+        .hero-content h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 1s ease;
+        }
+        
+        .hero-content p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease 0.2s forwards;
+            opacity: 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--text-dark);
+            padding: 14px 35px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease 0.4s forwards;
+            opacity: 0;
+            border: 2px solid var(--primary-light);
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: transparent;
+            color: var(--text-light);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px solid var(--text-light);
+        }
+        
+        .btn-outline:hover {
+            background: var(--text-light);
+            color: var(--text-dark);
+        }
+        
+        .features {
+            padding: 60px 0;
+            background: var(--background-light);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 70px;
+            color: var(--text-dark);
+            position: relative;
+        }
+        
+        .section-title:after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 4px;
+            background: var(--primary-light);
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+        
+        .feature-card {
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s ease;
+            position: relative;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .feature-img {
+            height: 250px;
+            overflow: hidden;
+        }
+        
+        .feature-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .feature-card:hover .feature-img img {
+            transform: scale(1.1);
+        }
+        
+        .feature-content {
+            padding: 25px;
+        }
+        
+        .feature-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+        
+        .feature-content p {
+            color: var(--text-medium);
+            margin-bottom: 20px;
+        }
+        
+        .feature-content a {
+            color: var(--primary-light);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-content a i {
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-content a:hover i {
+            transform: translateX(5px);
+        }
+        
+        .modules {
+            padding: 80px 0;
+            background: var(--background-medium);
+        }
+        
+        .module-nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .module-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary-light);
+            background: white;
+        }
+        
+        .module-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: var(--text-light);
+        }
+        
+        .module-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+        
+        .module-card p {
+            color: var(--text-medium);
+            font-size: 0.95rem;
+        }
+        
+        .virtual-tour {
+            padding: 80px 0;
+            background: var(--background-light);
+        }
+        
+        .tour-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .tour-viewer {
+            flex: 1;
+            min-width: 300px;
+            height: 500px;
+            background: #2c1a0f;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+        
+        #cave-viewer {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .tour-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .tour-controls button {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tour-controls button:hover {
+            background: var(--primary-light);
+            transform: scale(1.1);
+        }
+        
+        .tour-info {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .tour-info h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+        
+        .tour-info p {
+            color: var(--text-medium);
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+        
+        .cave-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .cave-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .cave-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            background: var(--primary-light);
+            color: white;
+        }
+        
+        .cave-item.active {
+            background: var(--primary-medium);
+            color: white;
+        }
+        
+        .gallery-section {
+            padding: 80px 0;
+            background: var(--background-medium);
+        }
+        
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        
+        .gallery-item {
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.5s ease;
+        }
+        
+        .gallery-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(139, 69, 19, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-light);
+            padding: 20px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+        
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+        
+        .gallery-overlay h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .gallery-overlay p {
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .search-section {
+            padding: 100px 0;
+            background: var(--background-light);
+        }
+        
+        .search-container-large {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .search-container-large h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: var(--text-dark);
+        }
+        
+        .search-box {
+            display: flex;
+            background: white;
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            border: none;
+            padding: 20px 30px;
+            font-size: 18px;
+            outline: none;
+        }
+        
+        .search-box button {
+            background: var(--primary-light);
+            color: var(--text-dark);
+            border: none;
+            padding: 0 35px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box button:hover {
+            background: var(--primary-medium);
+            color: white;
+        }
+        
+        .search-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .search-tag {
+            background: rgba(139, 69, 19, 0.1);
+            color: var(--text-dark);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search-tag:hover {
+            background: var(--primary-light);
+            color: white;
+        }
+        
+        .search-results {
+            margin-top: 50px;
+            text-align: left;
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .result-img {
+            height: 200px;
+        }
+        
+        .result-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .result-content {
+            padding: 20px;
+        }
+        
+        .result-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+        
+        .result-content .type {
+            color: var(--primary-light);
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .result-content p {
+            color: var(--text-medium);
+            margin-bottom: 15px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-medium);
+            font-size: 1.2rem;
+            grid-column: 1 / -1;
+        }
+        
+        .relics-section {
+            padding: 80px 0;
+            background: var(--background-light);
+        }
+        
+        .relics-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 40px;
+        }
+        
+        .relic-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s ease;
+        }
+        
+        .relic-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .relic-img {
+            height: 300px;
+            overflow: hidden;
+        }
+        
+        .relic-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .relic-card:hover .relic-img img {
+            transform: scale(1.05);
+        }
+        
+        .relic-content {
+            padding: 25px;
+        }
+        
+        .relic-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+        
+        .relic-content .date {
+            color: var(--primary-light);
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .relic-content p {
+            color: var(--text-medium);
+            margin-bottom: 20px;
+        }
+        
+        .music-control {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary-medium);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+        
+        .music-control:hover {
+            transform: scale(1.1);
+            background: var(--primary-light);
+        }
+        
+        footer {
+            background: var(--primary-dark);
+            color: var(--text-light);
+            padding: 70px 0 30px;
+        }
+        
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+        
+        .footer-col h3 {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-col h3:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--primary-light);
+        }
+        
+        .footer-col p {
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--text-light);
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background: var(--primary-light);
+            transform: translateY(-5px);
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 15px;
+        }
+        
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-light);
+            padding-left: 5px;
+        }
+        
+        .footer-links a i {
+            margin-right: 10px;
+            color: var(--primary-light);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 15px;
+            color: rgba(245, 232, 209, 0.7);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeInUp 1s ease forwards;
+        }
+        
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+        
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+        
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+        
+        @media (max-width: 992px) {
+            .hero-content h1 {
+                font-size: 3rem;
+            }
+            
+            nav ul {
+                display: none;
+            }
+            
+            .search-container {
+                margin-left: 10px;
+            }
+            
+            .search-container input {
+                width: 150px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .hero {
+                height: 70vh;
+            }
+            
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-content p {
+                font-size: 1.2rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .module-nav {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tour-container {
+                flex-direction: column;
+            }
+            
+            .tour-viewer {
+                height: 400px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .logo-text {
+                font-size: 1.5rem;
+            }
+            
+            .hero {
+                height: 60vh;
+            }
+            
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+            
+            .search-container {
+                display: none;
+            }
+            
+            .module-nav {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <div class="logo-text">数字<span>秦腔</span></div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="nav-link active" data-page="home">首页</a></li>
+                    <li><a href="#" class="nav-link" data-page="caves">剧目探索</a></li>
+                    <li><a href="#" class="nav-link" data-page="murals">扮相艺术</a></li>
+                    <li><a href="#" class="nav-link" data-page="relics">道具数字</a></li>
+                    <li><a href="#" class="nav-link" data-page="research">学术研究</a></li>
+                    <li><a href="#" class="nav-link" data-page="exhibitions">展览活动</a></li>
+                </ul>
+            </nav>
+            <div class="search-container">
+                <input type="text" id="header-search" placeholder="搜索剧目或扮相...">
+                <button id="header-search-btn"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="music-control">
+        <i class="fas fa-music"></i>
+        <audio id="background-music" loop>
+            <source src="#" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <div id="home" class="page active">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>千年秦腔 · 数字焕彩</h1>
+                <p>解锁秦腔艺术数字化传承与创新密码</p>
+                <a href="#" class="btn">踏入秦腔数字时空</a>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h2 class="section-title">数字秦腔特色</h2>
+                <div class="features-grid">
+                    <div class="feature-card fade-in">
+                        <div class="feature-img">
+                            <img src="https://images.unsplash.com/photo-1601992688418-8e228d5e9c1f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="剧目数字化">
+                        </div>
+                        <div class="feature-content">
+                            <h3>剧目数字化</h3>
+                            <p>运用高清录制与三维建模技术，完整记录秦腔经典剧目演出全貌，包括演员身段、唱腔韵律等细节，构建永久性的秦腔剧目数字资源库。 </p>
+                            <a href="#" class="nav-link" data-page="caves">了解更多 <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card fade-in delay-1">
+                        <div class="feature-img">
+                            <img src="https://images.unsplash.com/photo-1588416473588-9ea815a3e6d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="扮相复原">
+                        </div>
+                        <div class="feature-content">
+                            <h3>扮相复原</h3>
+                            <p>借助多光谱成像和数字修复手段，精准还原秦腔传统扮相的色彩、样式，再现经典角色妆容服饰的历史原貌，让古老扮相艺术重焕光彩。</p>
+                            <a href="#" class="nav-link" data-page="murals">了解更多 <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card fade-in delay-2">
+                        <div class="feature-img">
+                            <img src="https://images.unsplash.com/photo-1547981609-4b6bf67dbacc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="沉浸体验">
+                        </div>
+                        <div class="feature-content">
+                            <h3>沉浸体验</h3>
+                            <p>利用先进VR技术，打造秦腔演出沉浸式虚拟场景，观众仿佛置身戏楼，近距离感受秦腔表演的独特魅力与文化底蕴。</p>
+                            <a href="#" class="nav-link" data-page="caves">了解更多 <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="modules">
+            <div class="container">
+                <h2 class="section-title">探索秦腔文化</h2>
+                <div class="module-nav">
+                    <div class="module-card nav-link" data-page="caves">
+                        <div class="module-icon">
+                            <i class="fas fa-mountain"></i>
+                        </div>
+                        <h3>剧目探索</h3>
+                        <p>通过虚拟导览，线上参观秦腔经典剧目演出，领略《三滴血》《火焰驹》等名剧的艺术魅力。</p>
+                    </div>
+                    
+                    <div class="module-card nav-link" data-page="murals">
+                        <div class="module-icon">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <h3>扮相艺术</h3>
+                        <p>赏析秦腔角色扮相之美，深入了解不同角色妆容、服饰背后的文化寓意与历史渊源。</p>
+                    </div>
+                    
+                    <div class="module-card nav-link" data-page="relics">
+                        <div class="module-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <h3>道具数字</h3>
+                        <p>以数字化形式展示秦腔演出道具，呈现道具制作工艺、在剧目中的作用及文化象征意义。</p>
+                    </div>
+                    
+                    <div class="module-card nav-link" data-page="research">
+                        <div class="module-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h3>学术研究</h3>
+                        <p>查阅秦腔学术文献、研究成果，追踪秦腔艺术发展脉络与前沿学术动态。</p>
+                    </div>
+                    
+                    <div class="module-card nav-link" data-page="exhibitions">
+                        <div class="module-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3>展览活动</h3>
+                        <p>知晓国内外秦腔主题展览与文化交流活动信息，参与线上线下互动，感受秦腔文化活力。</p>
+                    </div>
+                    
+                    <!--<div class="module-card nav-link" data-page="search">
+                        <div class="module-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>搜索洞窟</h3>
+                        <p>快速查找特定洞窟信息</p>
+                    </div>-->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="caves" class="page">
+        <div class="container">
+            <div class="virtual-tour">
+                <h2 class="section-title">洞窟虚拟探索</h2>
+                
+                <div class="tour-container">
+                    <div class="tour-viewer">
+                        <div id="cave-viewer"></div>
+                        <div class="tour-controls">
+                            <button id="rotate-left"><i class="fas fa-undo"></i></button>
+                            <button id="rotate-right"><i class="fas fa-redo"></i></button>
+                            <button id="zoom-in"><i class="fas fa-search-plus"></i></button>
+                            <button id="zoom-out"><i class="fas fa-search-minus"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="tour-info">
+                        <h2>莫高窟第45窟</h2>
+                        <p>莫高窟第45窟开凿于盛唐时期，是敦煌石窟中的代表性洞窟之一。此窟为覆斗形顶，西壁开一龛，龛内塑像保存完好，是莫高窟彩塑艺术的杰作。</p>
+                        <p>洞窟内共有七身塑像，包括佛、弟子、菩萨、天王。主尊佛像结跏趺坐，神态庄严；两侧弟子一老一少，神态各异；菩萨体态婀娜，衣饰华丽；天王威武雄壮，气势非凡。</p>
+                        <p>壁画内容十分丰富，包括观无量寿经变、法华经变等经变画，以及千佛、飞天等图案。南壁绘制的观音经变是敦煌壁画中的精品，场面宏大，人物众多。</p>
+                        
+                        <h3>其他洞窟</h3>
+                        <div class="cave-list">
+                            <div class="cave-item active">莫高窟45</div>
+                            <div class="cave-item">莫高窟57</div>
+                            <div class="cave-item">莫高窟220</div>
+                            <div class="cave-item">莫高窟158</div>
+                            <div class="cave-item">榆林窟25</div>
+                            <div class="cave-item">榆林窟3</div>
+                            <div class="cave-item">西千佛洞9</div>
+                            <div class="cave-item">莫高窟217</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="murals" class="page">
+        <div class="container">
+            <div class="gallery-section">
+                <h2 class="section-title">敦煌壁画艺术</h2>
+                <p class="section-subtitle" style="text-align: center; margin-bottom: 50px; max-width: 800px; margin-left: auto; margin-right: auto; color: var(--text-medium);">
+                    敦煌壁画是敦煌艺术的主要组成部分，规模巨大，技艺精湛。内容丰富多彩，有佛像、佛教故事、佛教史迹、经变、神怪、供养人、装饰图案等题材，是十六国至清代等十多个朝代的艺术瑰宝。
+                </p>
+                
+                <div class="gallery-container">
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1596541223130-8a3d4c79d6a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="飞天壁画">
+                        <div class="gallery-overlay">
+                            <h3>飞天壁画</h3>
+                            <p>莫高窟第320窟 盛唐</p>
+                            <a href="#" class="btn btn-outline">查看详情</a>
+                        </div>
+                    </div>
+                    
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1588416473588-9ea815a3e6d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="佛经故事">
+                        <div class="gallery-overlay">
+                            <h3>佛经故事画</h3>
+                            <p>莫高窟第257窟 北魏</p>
+                            <a href="#" class="btn btn-outline">查看详情</a>
+                        </div>
+                    </div>
+                    
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1547981609-4b6bf67dbacc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="供养人像">
+                        <div class="gallery-overlay">
+                            <h3>供养人画像</h3>
+                            <p>莫高窟第98窟 五代</p>
+                            <a href="#" class="btn btn-outline">查看详情</a>
+                        </div>
+                    </div>
+                    
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1596541223130-8a3d4c79d6a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="西方净土变">
+                        <div class="gallery-overlay">
+                            <h3>西方净土变</h3>
+                            <p>莫高窟第220窟 初唐</p>
+                            <a href="#" class="btn btn-outline">查看详情</a>
+                        </div>
+                    </div>
+                    
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1588416473588-9ea815a3e6d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="反弹琵琶">
+                        <div class="gallery-overlay">
+                            <h3>反弹琵琶</h3>
+                            <p>莫高窟第112窟 中唐</p>
+                            <a href="#" class="btn btn-outline">查看详情</a>
+                        </div>
+                    </div>
+                    
+                    <div class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1547981609-4b6bf67dbacc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="千手观音">
+                        <div class="gallery-overlay">
+                            <h3>千手观音</h3>
+                            <p>莫高窟第3窟 元代</p>
+                            <a href="#" class="btn btn-outline">查看详情</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="relics" class="page">
+        <div class="container">
+            <div class="relics-section">
+                <h2 class="section-title">敦煌文物数字化</h2>
+                <p class="section-subtitle" style="text-align: center; margin-bottom: 50px; max-width: 800px; margin-left: auto; margin-right: auto; color: var(--text-medium);">
+                    敦煌文物数字化项目通过先进技术手段，对敦煌石窟中的珍贵文物进行高精度数字化采集，建立永久性数字档案，实现文物的永久保存和共享。
+                </p>
+                
+                <div class="relics-container">
+                    <div class="relic-card fade-in">
+                        <div class="relic-img">
+                            <img src="https://images.unsplash.com/photo-1601992688418-8e228d5e9c1f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="敦煌文书">
+                        </div>
+                        <div class="relic-content">
+                            <h3>敦煌文书</h3>
+                            <div class="date">唐代 · 公元8世纪</div>
+                            <p>藏经洞出土的5万余件古代文献，包括佛经、道经、儒家经典、史籍、诗词、契约等，是研究中国古代社会、宗教、文化的珍贵资料。</p>
+                            <a href="#" class="btn">查看详情</a>
+                        </div>
+                    </div>
+                    
+                    <div class="relic-card fade-in delay-1">
+                        <div class="relic-img">
+                            <img src="https://images.unsplash.com/photo-1588416473588-9ea815a3e6d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="彩塑艺术">
+                        </div>
+                        <div class="relic-content">
+                            <h3>彩塑艺术</h3>
+                            <div class="date">盛唐 · 公元8世纪</div>
+                            <p>敦煌石窟中保存有2000余身彩塑，展现了从十六国到元代千余年间彩塑艺术的发展演变，具有极高的艺术价值和历史价值。</p>
+                            <a href="#" class="btn">查看详情</a>
+                        </div>
+                    </div>
+                    
+                    <div class="relic-card fade-in delay-2">
+                        <div class="relic-img">
+                            <img src="https://images.unsplash.com/photo-1547981609-4b6bf67dbacc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80" alt="丝路遗珍">
+                        </div>
+                        <div class="relic-content">
+                            <h3>丝路遗珍</h3>
+                            <div class="date">南北朝至元代 · 5-14世纪</div>
+                            <p>敦煌作为丝绸之路重镇，出土了大量反映中西文化交流的珍贵文物，包括丝绸、铜器、金银器、玻璃器等，见证了古代丝绸之路的繁荣。</p>
+                            <a href="#" class="btn">查看详情</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="search" class="page">
+        <div class="search-section">
+            <div class="container">
+                <div class="search-container-large">
+                    <h2>搜索秦腔剧目与元素</h2>
+                    <p>输入剧目名称,经典角色或相关关键词，快速查找您感兴趣的秦腔文化内容</p>
+                    
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="输入剧目名称或角色名（如：<三滴血>,周仁）">
+                        <button id="search-btn">搜索 <i class="fas fa-search"></i></button>
+                    </div>
+                    
+                    <div class="search-tags">
+                        <div class="search-tag">三滴血</div>
+                        <div class="search-tag">火焰驹</div>
+                        <div class="search-tag">铡美案</div>
+                        <div class="search-tag">秦香莲</div>
+                        <div class="search-tag">陈世美</div>
+                        <div class="search-tag">周仁</div>
+                        <div class="search-tag">李三娘</div>
+                        <div class="search-tag">黑虎坐台</div>
+                    </div>
+                    
+                    <div class="search-results">
+                        <h3>搜索结果</h3>
+                        <div class="result-grid">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3>关于数字秦腔</h3>
+                    <p>数字秦腔项目借助前沿数字技术，永久留存秦腔这一古老剧种的珍贵演出资料、唱腔曲谱、表演技艺等信息，通过互联网向全球传播秦腔艺术魅力，助力秦腔文化遗产的保护、传承与弘扬，让秦腔这颗戏曲明珠在数字时代绽放新光彩。</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-weixin"></i></a>
+                        <!--<a href="#"><i class="fab fa-weibo"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>-->
+                    </div>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>快速链接</h3>
+                    <ul class="footer-links">
+                        <li><a href="#" class="nav-link" data-page="home"><i class="fas fa-chevron-right"></i> 首页</a></li>
+                        <li><a href="#" class="nav-link" data-page="caves"><i class="fas fa-chevron-right"></i> 剧目探索</a></li>
+                        <li><a href="#" class="nav-link" data-page="murals"><i class="fas fa-chevron-right"></i> 扮相艺术</a></li>
+                        <li><a href="#" class="nav-link" data-page="relics"><i class="fas fa-chevron-right"></i> 道具数字</a></li>
+                        <li><a href="#" class="nav-link" data-page="search"><i class="fas fa-chevron-right"></i> 搜索剧目</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h3>联系方式</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-map-marker-alt"></i> 石家庄邮电职业技术学院东校区</a></li>
+                        <li><a href="#"><i class="fas fa-phone-alt"></i> 0311-85998903</a></li>
+                        <li><a href="#"><i class="fas fa-envelope"></i> info@qinqiang.com</a></li>
+                        <li><a href="#"><i class="fas fa-clock"></i> 周一至周五 8:30-17:30</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 石家庄邮电职业技术学院 版权所有 | ICP备案号：陇ICP备12345678号</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pages = document.querySelectorAll('.page');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            showPage('home');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageId = this.getAttribute('data-page');
+                    showPage(pageId);
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            function showPage(pageId) {
+                pages.forEach(page => page.classList.remove('active'));
+                document.getElementById(pageId).classList.add('active');
+                window.scrollTo(0, 0);
+                if (pageId === 'caves') initThreeJS();
+                if (pageId === 'search') initSearchPage();
+            }
+            
+            const musicControl = document.querySelector('.music-control');
+            const musicPlayer = document.getElementById('background-music');
+            let musicPlaying = false;
+            
+            musicControl.addEventListener('click', function() {
+                if (musicPlaying) {
+                    musicPlayer.pause();
+                    musicControl.innerHTML = '<i class="fas fa-music"></i>';
+                } else {
+                    musicControl.innerHTML = '<i class="fas fa-pause"></i>';
+                }
+                musicPlaying = !musicPlaying;
+            });
+            
+            function initSearchPage() {
+                const searchInput = document.getElementById('search-input');
+                const searchBtn = document.getElementById('search-btn');
+                const searchTags = document.querySelectorAll('.search-tag');
+                const resultGrid = document.querySelector('.result-grid');
+                
+                const searchData = [
+                    {
+                        id: 1,
+                        name: "莫高窟第45窟",
+                        type: "洞窟",
+                        desc: "盛唐时期开凿的代表性洞窟，以保存完好的彩塑群著称",
+                        image: "https://images.unsplash.com/photo-1596541223130-8a3d4c79d6a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                    },
+                    {
+                        id: 2,
+                        name: "飞天壁画",
+                        type: "壁画",
+                        desc: "敦煌艺术的标志性形象，表现佛教中娱乐佛和供养佛的天人",
+                        image: "https://images.unsplash.com/photo-1588416473588-9ea815a3e6d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                    },
+                    {
+                        id: 3,
+                        name: "榆林窟第25窟",
+                        type: "洞窟",
+                        desc: "唐代代表洞窟，以精美的壁画和完整的建筑结构闻名",
+                        image: "https://images.unsplash.com/photo-1547981609-4b6bf67dbacc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                    },
+                    {
+                        id: 4,
+                        name: "反弹琵琶",
+                        type: "壁画",
+                        desc: "敦煌壁画中的经典形象，出自莫高窟第112窟《观无量寿经变》",
+                        image: "https://images.unsplash.com/photo-1596541223130-8a3d4c79d6a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                    },
+                    {
+                        id: 5,
+                        name: "藏经洞文物",
+                        type: "文物",
+                        desc: "莫高窟第17窟发现的5万余件古代文献和艺术品",
+                        image: "https://images.unsplash.com/photo-1601992688418-8e228d5e9c1f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                    },
+                    {
+                        id: 6,
+                        name: "千手观音像",
+                        type: "壁画",
+                        desc: "莫高窟第3窟元代绘制的千手千眼观音像，是敦煌晚期壁画的杰作",
+                        image: "https://images.unsplash.com/photo-1547981609-4b6bf67dbacc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                    }
+                ];
+                
+                searchBtn.addEventListener('click', function() {
+                    performSearch(searchInput.value.trim());
+                });
+                
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') performSearch(searchInput.value.trim());
+                });
+                
+                searchTags.forEach(tag => {
+                    tag.addEventListener('click', function() {
+                        searchInput.value = this.textContent;
+                        performSearch(this.textContent);
+                    });
+                });
+                
+                function performSearch(term) {
+                    const results = searchData.filter(item => 
+                        item.name.toLowerCase().includes(term.toLowerCase()) || 
+                        item.desc.toLowerCase().includes(term.toLowerCase())
+                    );
+                    displayResults(results);
+                }
+                
+                function displayResults(results) {
+                    resultGrid.innerHTML = '';
+                    if (results.length === 0) {
+                        resultGrid.innerHTML = '<p class="no-results">没有找到匹配的结果</p>';
+                        return;
+                    }
+                    results.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'result-card fade-in';
+                        card.innerHTML = `
+                            <div class="result-img">
+                                <img src="${item.image}" alt="${item.name}">
+                            </div>
+                            <div class="result-content">
+                                <span class="type">${item.type}</span>
+                                <h3>${item.name}</h3>
+                                <p>${item.desc}</p>
+                                <a href="#" class="btn">查看详情</a>
+                            </div>
+                        `;
+                        resultGrid.appendChild(card);
+                    });
+                }
+            }
+            
+            const headerSearchBtn = document.getElementById('header-search-btn');
+            const headerSearchInput = document.getElementById('header-search');
+            
+            headerSearchBtn.addEventListener('click', function() {
+                const term = headerSearchInput.value.trim();
+                if (term) {
+                    showPage('search');
+                    setTimeout(() => {
+                        const searchInput = document.getElementById('search-input');
+                        if (searchInput) {
+                            searchInput.value = term;
+                            document.getElementById('search-btn').click();
+                        }
+                    }, 100);
+                }
+            });
+            
+            function initThreeJS() {
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x2c1a0f);
+                
+                const camera = new THREE.PerspectiveCamera(75, 
+                    document.getElementById('cave-viewer').clientWidth / 
+                    document.getElementById('cave-viewer').clientHeight, 
+                    0.1, 1000);
+                camera.position.z = 5;
+                
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(
+                    document.getElementById('cave-viewer').clientWidth,
+                    document.getElementById('cave-viewer').clientHeight
+                );
+                document.getElementById('cave-viewer').appendChild(renderer.domElement);
+                
+                const controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 5, 5);
+                scene.add(directionalLight);
+                
+                const caveGeometry = new THREE.SphereGeometry(4, 32, 32);
+                const caveMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0xc9b18a,
+                    wireframe: false,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const cave = new THREE.Mesh(caveGeometry, caveMaterial);
+                scene.add(cave);
+                
+                const muralTexture = new THREE.TextureLoader().load('https://images.unsplash.com/photo-1588416473588-9ea815a3e6d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80');
+                const muralMaterial = new THREE.MeshStandardMaterial({ 
+                    map: muralTexture,
+                    side: THREE.DoubleSide
+                });
+                const muralGeometry = new THREE.PlaneGeometry(2, 2);
+                const mural = new THREE.Mesh(muralGeometry, muralMaterial);
+                mural.position.set(0, 0, 3.9);
+                scene.add(mural);
+                
+                document.getElementById('rotate-left').addEventListener('click', () => cave.rotation.y += 0.2);
+                document.getElementById('rotate-right').addEventListener('click', () => cave.rotation.y -= 0.2);
+                document.getElementById('zoom-in').addEventListener('click', () => camera.position.z = Math.max(2, camera.position.z - 0.5));
+                document.getElementById('zoom-out').addEventListener('click', () => camera.position.z = Math.min(10, camera.position.z + 0.5));
+                
+                function animate() {
+                    requestAnimationFrame(animate);
+                    controls.update();
+                    renderer.render(scene, camera);
+                }
+                animate();
+                
+                window.addEventListener('resize', () => {
+                    camera.aspect = document.getElementById('cave-viewer').clientWidth / 
+                                    document.getElementById('cave-viewer').clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(
+                        document.getElementById('cave-viewer').clientWidth,
+                        document.getElementById('cave-viewer').clientHeight
+                    );
+                });
+            }
+        });
+    </script>
+</body>
+</html>
